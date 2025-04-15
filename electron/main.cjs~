@@ -1,0 +1,51 @@
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+const url = require('url')
+const { spawn } = require('child_process');
+const waitOn = require("wait-on");
+
+const isDev = process.env.ELECTRON_START_URL !== 'production'; // 혹은 process.env.NODE_ENV !== 'production'
+
+const createWindow = async () => { // (1)
+    // if (isDev) {
+    //     // Vite dev 서버 실행
+    //     spawn('npm', ['run', 'dev'], {
+    //         shell: true,
+    //         stdio: 'inherit',
+    //     });
+    //
+    //     // dev 서버 열릴 때까지 대기 후 접속
+    //     await waitOn({ resources: ['http://localhost:5173'], timeout: 10000 });
+    // }
+
+    const win = new BrowserWindow({
+        width: 1024,
+        height: 768,
+    });
+
+    const startUrl = isDev
+        ? 'http://localhost:5173'
+        : url.format({  // (2)
+        pathname: path.join(__dirname, '/../build/index.html'),
+        protocol: 'file:',
+        slashes: true
+    });
+
+    win.loadURL(startUrl);
+};
+
+app.whenReady().then(() => {
+    createWindow();
+
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
+        }
+    });
+});
+
+app.on('window-all-closed', () => { // (4)
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
